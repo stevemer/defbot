@@ -6,21 +6,25 @@ public class WeaponControl : MonoBehaviour {
 	const int READY = 0;
 	//const int FORWARD = 1;
 	const int SHOOTING = 2;
-	int state = READY;
+	
+	int state;
 	double counter;
-	Vector3 velocity;
+	VelocityControl character;
+	
+	const float FORWARD_ACCELERATION = 1f;
+	const float SHOT_RECOIL = 30f;
 	
 	void Start () {
-		velocity = Vector3.zero;
+		state = READY;
+		character = transform.parent.GetComponent<VelocityControl>();
 	}
 	
-	void VelocityUpdate () {
-		transform.Translate (velocity * (float)Time.deltaTime);
-		velocity = velocity * (float)(Math.Pow(0.05F,Time.deltaTime));
+	void VelocityUpdate (float f) {
+		Vector3 unitVector = transform.rotation * Vector3.forward;
+		character.velocity += f * unitVector;
 	}
 	
 	void Update () {
-		VelocityUpdate();
 		if (state == READY) {
 			if (Input.GetKey(KeyCode.A))
 				transform.Rotate (Vector3.down);
@@ -31,7 +35,8 @@ public class WeaponControl : MonoBehaviour {
 			if (Input.GetKey(KeyCode.S))
 				transform.Rotate (Vector3.right);
 			if (Input.GetKey(KeyCode.Q)) {
-				velocity += 9f * Vector3.forward;
+				VelocityUpdate ((float)Math.Pow(FORWARD_ACCELERATION,Time.deltaTime));
+				//Debug.Log (transform.localEulerAngles*(float)Math.Pow(FORWARD_ACCELERATION,Time.deltaTime));
 			}
 			if (Input.GetKey(KeyCode.E)) {
 				state = SHOOTING;
@@ -42,10 +47,9 @@ public class WeaponControl : MonoBehaviour {
 		} else if (state == SHOOTING) {
 			counter -= Time.deltaTime;
 			if (counter <= 0) {
-				velocity += Vector3.back * 350f;
+				VelocityUpdate (-SHOT_RECOIL); //Not using deltaTime because I want impulse to be consistent.
 				state = READY;
 			}
 		}
-		
 	}
 }
